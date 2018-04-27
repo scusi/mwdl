@@ -20,6 +20,10 @@ mwdl -t tor.ccc.de:9050 -u https://github.com/scusi/mwdl/archive/master.zip
 
 ## Install Release
 
+You can download a release at: https://github.com/scusi/mwdl/releases
+
+Download the archive for your Operatingsystem and architecture unpack it and put the binary somewhere into your PATH.
+
 ## Install from Source
 
 In order to install from source you need to have a go workspace setup and the sources.
