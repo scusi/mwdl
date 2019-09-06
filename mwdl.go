@@ -25,7 +25,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"flag"
-	"github.com/h12.me/socks"
+	"h12.io/socks"
 	"io"
 	"io/ioutil"
 	"log"
