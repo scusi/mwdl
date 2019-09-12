@@ -26,6 +26,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"h12.io/socks"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -36,12 +37,20 @@ import (
 	"time"
 )
 
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 var useragent string
 var proxy string
 var toraddr string
 var urlstr string
 var file string
 var outDir string
+var performUpdate bool
+var showVersion bool
 
 func init() {
 	flag.StringVar(&useragent, "ua", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E)", "user-agent to send with request")
@@ -50,6 +59,8 @@ func init() {
 	flag.StringVar(&urlstr, "u", "", "url to fetch, if set 'f' is ignored")
 	flag.StringVar(&file, "f", "", "file with urls to fetch, one per line")
 	flag.StringVar(&outDir, "o", "./", "directory to write files to")
+	flag.BoolVar(&performUpdate, "update", false, "update itself when true")
+	flag.BoolVar(&showVersion, "version", false, "show version and update")
 }
 
 // getProxy - checks if a proxy is set via ENV HTTP_PROXY, http_proxy and returns that.
@@ -160,6 +171,38 @@ func fetchFromUrl(uri string) string {
 // iterates over arguments (urls) and calls fetchFromUrl for each of it.
 func main() {
 	flag.Parse()
+	if showVersion {
+		fmt.Printf("Version %s, Commit: %s, Buildtime: %s\n", version, commit, date)
+		os.Exit(0)
+	}
+	if performUpdate {
+		releaseID, release_tag, err := GetLatestRelease()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if release_tag == "v"+version {
+			fmt.Printf("Your version (%s) is already the latest version available.\n", version)
+			os.Exit(0)
+		}
+		u, err := GetMatchingAssetDownloadURL(releaseID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		asset, err := DownloadAsset(u)
+		if err != nil {
+			log.Fatal(err)
+		}
+		binary, err := UnpackAsset(asset)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = Update(binary)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("updated from %s to %s\n", version, release_tag)
+		os.Exit(0)
+	}
 	if urlstr != "" {
 		fetchFromUrl(urlstr)
 	}
