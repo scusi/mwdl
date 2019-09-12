@@ -25,6 +25,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"flag"
+	"fmt"
 	"h12.me/socks"
 	"io"
 	"io/ioutil"
@@ -49,6 +50,7 @@ var urlstr string
 var file string
 var outDir string
 var performUpdate bool
+var showVersion bool
 
 func init() {
 	flag.StringVar(&useragent, "ua", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E)", "user-agent to send with request")
@@ -58,6 +60,7 @@ func init() {
 	flag.StringVar(&file, "f", "", "file with urls to fetch, one per line")
 	flag.StringVar(&outDir, "o", "./", "directory to write files to")
 	flag.BoolVar(&performUpdate, "update", false, "update itself when true")
+	flag.BoolVar(&showVersion, "version", false, "show version and update")
 }
 
 // getProxy - checks if a proxy is set via ENV HTTP_PROXY, http_proxy and returns that.
@@ -168,6 +171,10 @@ func fetchFromUrl(uri string) string {
 // iterates over arguments (urls) and calls fetchFromUrl for each of it.
 func main() {
 	flag.Parse()
+	if showVersion {
+		fmt.Printf("Version %s, Commit: %s, Buildtime: %s\n", version, commit, date)
+		os.Exit(0)
+	}
 	if performUpdate {
 		releaseID, _, err := GetLatestRelease()
 		if err != nil {
@@ -189,6 +196,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		os.Exit(0)
 	}
 	if urlstr != "" {
 		fetchFromUrl(urlstr)

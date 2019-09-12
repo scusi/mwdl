@@ -3,16 +3,17 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
-	//"github.com/inconshreveable/go-update"
 	"archive/tar"
 	"archive/zip"
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"crypto"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"github.com/inconshreveable/go-update"
 	"io"
 	"io/ioutil"
 	"log"
@@ -31,6 +32,14 @@ var github_user = "scusi"   // your github account name
 var github_project = "mwdl" // your github project name
 var binary_name = "mwdl"    // name of your binary within your release archives
 var windows_ext = ".exe"    // windows extension for your binary within your release archives
+
+// replace publicKey with your public ECDSA key in pem format
+var publicKey = []byte(`
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDDEtBqbRWOGkYlJLONyuGSndiD+C
+lApqBbwd5Rk97zGjaPNJcblIt55s48IxmQU7OA7TxH0zHNfIetjUfguXkA==
+-----END PUBLIC KEY-----
+`)
 
 // DO NOT CHANGE ANYTHING BELOW THIS LINE, UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING.
 
@@ -234,6 +243,25 @@ func Update(binary []byte) (err error) {
 	}
 	log.Printf("Signature is: %x", signature)
 	// TODO: prepare update options
+	opts := update.Options{
+		Checksum:  hash.Sum(nil),
+		Signature: signature,
+		Hash:      crypto.SHA256,             // this is the default, you don't need to specify it
+		Verifier:  update.NewECDSAVerifier(), // this is the default, you don't need to specify it
+	}
+	err = opts.SetPublicKeyPEM(publicKey)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	// TODO: validate checksum and signature of the binary and apply update
+	update_data_reader := bytes.NewReader(binary)
+	//err = update.Apply(update_data_reader, opts)
+	err = update.Apply(update_data_reader, update.Options{})
+	if err != nil {
+		// error handling
+		log.Println(err)
+		return
+	}
 	return
 }
