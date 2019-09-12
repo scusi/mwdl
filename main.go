@@ -181,7 +181,7 @@ func main() {
 			log.Fatal(err)
 		}
 		if release_tag == "v"+version {
-			fmt.Printf("Your version (%s) is already the latest version available.\n")
+			fmt.Printf("Your version (%s) is already the latest version available.\n", version)
 			os.Exit(0)
 		}
 		u, err := GetMatchingAssetDownloadURL(releaseID)
