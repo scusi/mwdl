@@ -176,9 +176,13 @@ func main() {
 		os.Exit(0)
 	}
 	if performUpdate {
-		releaseID, _, err := GetLatestRelease()
+		releaseID, release_tag, err := GetLatestRelease()
 		if err != nil {
 			log.Fatal(err)
+		}
+		if release_tag == version {
+			fmt.Printf("Your version (%s) is already the latest version available.\n")
+			os.Exit(0)
 		}
 		u, err := GetMatchingAssetDownloadURL(releaseID)
 		if err != nil {
@@ -196,6 +200,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Printf("updated from %s to %s\n", version, release_tag)
 		os.Exit(0)
 	}
 	if urlstr != "" {
