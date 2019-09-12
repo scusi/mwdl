@@ -84,7 +84,7 @@ func GetMatchingAssetDownloadURL(releaseID string) (downloadURL string, err erro
 		name := result["name"].(string)
 		if strings.Contains(name, runtime.GOOS) && strings.Contains(name, runtime.GOARCH) {
 			//if strings.Contains(name, "windows") && strings.Contains(name, runtime.GOARCH) { // for testing
-			log.Printf("[%02d]: %v\n", k, result["id"].(int))
+			log.Printf("[%02d]: %v\n", k, int(result["id"].(float64)))
 			log.Printf("[%02d]: %v\n", k, result["name"])
 			log.Printf("[%02d]: %v\n", k, result["browser_download_url"])
 			downloadURL = result["browser_download_url"].(string)
