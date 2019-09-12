@@ -180,7 +180,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if release_tag == version {
+		if release_tag == "v"+version {
 			fmt.Printf("Your version (%s) is already the latest version available.\n")
 			os.Exit(0)
 		}
