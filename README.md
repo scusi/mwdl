@@ -72,4 +72,8 @@ where <md5sum(url)> is replaced by the md5 sum of the url requested.
 <filename> will be taken from the path or (if there is not filename in the path) use ```outfile```.
 
 
+### updating mwdl
 
+You can update _mwdl_ to the latest released version by calling ```mwdl -update```.
+
+You can check which version you run with ```mwdl -version```.
