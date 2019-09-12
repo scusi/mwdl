@@ -64,7 +64,7 @@ func GetLatestRelease() (releaseID string, tag_name string, err error) {
 	}
 	releaseID_float := result["id"].(float64)
 	releaseID_int := int(releaseID_float)
-	log.Printf("releaseID: %d (type: %T)\n", releaseID_int, releaseID_int)
+	//log.Printf("releaseID: %d (type: %T)\n", releaseID_int, releaseID_int)
 	releaseID = strconv.Itoa(releaseID_int)
 
 	tag_name = result["tag_name"].(string)
@@ -93,9 +93,9 @@ func GetMatchingAssetDownloadURL(releaseID string) (downloadURL string, err erro
 		name := result["name"].(string)
 		if strings.Contains(name, runtime.GOOS) && strings.Contains(name, runtime.GOARCH) {
 			//if strings.Contains(name, "windows") && strings.Contains(name, runtime.GOARCH) { // for testing
-			log.Printf("[%02d]: %v\n", k, int(result["id"].(float64)))
-			log.Printf("[%02d]: %v\n", k, result["name"])
-			log.Printf("[%02d]: %v\n", k, result["browser_download_url"])
+			//log.Printf("[%02d]: %v\n", k, int(result["id"].(float64)))
+			//log.Printf("[%02d]: %v\n", k, result["name"])
+			//log.Printf("[%02d]: %v\n", k, result["browser_download_url"])
 			downloadURL = result["browser_download_url"].(string)
 		}
 	}
@@ -113,19 +113,21 @@ func DownloadAsset(downloadURL string) (asset []byte, err error) {
 	if err != nil {
 		return
 	}
-	log.Printf("Response:\n%s\n", dumpResp)
+	//log.Printf("Response:\n%s\n", dumpResp)
 
 	asset, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
-	tempFile, err := ioutil.TempFile(os.TempDir(), github_project+"-download-")
-	if err != nil {
-		return
-	}
-	tempFile.Write(asset)
-	tempFile.Sync()
-	log.Printf("wrote downloaded content to '%s'\n", tempFile.Name())
+	/*
+		tempFile, err := ioutil.TempFile(os.TempDir(), github_project+"-download-")
+		if err != nil {
+			return
+		}
+		tempFile.Write(asset)
+		tempFile.Sync()
+		log.Printf("wrote downloaded content to '%s'\n", tempFile.Name())
+	*/
 	return
 }
 
@@ -136,7 +138,7 @@ func UnpackAsset(asset []byte) (binary []byte, err error) {
 	// zip == 504b
 	magicSig := make([]byte, 2)
 	magicSig = asset[0:2]
-	log.Printf("magic is: '%s'\n", hex.Dump(magicSig))
+	//log.Printf("magic is: '%s'\n", hex.Dump(magicSig))
 	//log.Printf("magic is: '%s'\n", hex.Dump(asset[0:4]))
 
 	if bytes.Equal(magicSig, []byte{0x1F, 0x8B}) {
@@ -167,7 +169,7 @@ func UnpackAsset(asset []byte) (binary []byte, err error) {
 				}
 				bw.Flush()
 				binary = b.Bytes()
-				log.Printf("copied %d bytes from %s\n", n, name)
+				//log.Printf("copied %d bytes from %s\n", n, name)
 				break
 			} else {
 				continue
@@ -209,11 +211,15 @@ func UnpackAsset(asset []byte) (binary []byte, err error) {
 					return binary, err
 				}
 				rc.Close()
-				log.Printf("copied %d bytes from %s\n", n, f.Name)
+				//log.Printf("copied %d bytes from %s\n", n, f.Name)
 			} else {
 				// if the filename is not what we look for, continue to next file in archive.
 				continue
 			}
+		}
+		err = os.Remove(zipTempFile.Name())
+		if err != nil {
+			log.Printf("removing temprary file '%s' failed: %s\n", zipTempFile.Name(), err.Error())
 		}
 		return binary, err
 	} else {
@@ -230,9 +236,10 @@ func Update(binary []byte) (err error) {
 	// caculate checksum
 	hash := sha256.New()
 	hash.Write(binary)
-	log.Printf("Checksum is: %x\n", hash.Sum(nil))
+	checksum := hash.Sum(nil)
+	log.Printf("Checksum is: %x\n", checksum)
 	// go get the signature for checksum from signature server
-	resp, err := http.Get("http://127.0.0.1:9999/signature/" + fmt.Sprintf("%x", hash.Sum(nil)))
+	resp, err := http.Get("http://127.0.0.1:9999/signature/" + fmt.Sprintf("%x", checksum))
 	if err != nil {
 		return
 	}
@@ -244,14 +251,15 @@ func Update(binary []byte) (err error) {
 	log.Printf("Signature is: %x", signature)
 	// TODO: prepare update options
 	opts := update.Options{
-		Checksum:  hash.Sum(nil),
+		Checksum:  checksum,
 		Signature: signature,
 		Hash:      crypto.SHA256,             // this is the default, you don't need to specify it
 		Verifier:  update.NewECDSAVerifier(), // this is the default, you don't need to specify it
 	}
 	err = opts.SetPublicKeyPEM(publicKey)
 	if err != nil {
-		log.Println(err)
+		log.Println("Set public key failed " + err.Error())
+		//log.Println(err)
 		return
 	}
 	// TODO: validate checksum and signature of the binary and apply update
