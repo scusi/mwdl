@@ -18,7 +18,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/httputil"
+	//"net/http/httputil"
 	"os"
 	"runtime"
 	"strconv"
@@ -89,7 +89,7 @@ func GetMatchingAssetDownloadURL(releaseID string) (downloadURL string, err erro
 	if err != nil {
 		return
 	}
-	for k, result := range results {
+	for _, result := range results {
 		name := result["name"].(string)
 		if strings.Contains(name, runtime.GOOS) && strings.Contains(name, runtime.GOARCH) {
 			//if strings.Contains(name, "windows") && strings.Contains(name, runtime.GOARCH) { // for testing
@@ -109,7 +109,7 @@ func DownloadAsset(downloadURL string) (asset []byte, err error) {
 		return
 	}
 	defer resp.Body.Close()
-	dumpResp, err := httputil.DumpResponse(resp, false)
+	//dumpResp, err := httputil.DumpResponse(resp, false)
 	if err != nil {
 		return
 	}
@@ -163,7 +163,8 @@ func UnpackAsset(asset []byte) (binary []byte, err error) {
 			if name == binary_name && header.Typeflag == tar.TypeReg {
 				var b bytes.Buffer
 				bw := bufio.NewWriter(&b)
-				n, err := io.Copy(bw, tarReader)
+				//n, err := io.Copy(bw, tarReader)
+				_, err := io.Copy(bw, tarReader)
 				if err != nil {
 					return binary, err
 				}
@@ -206,7 +207,8 @@ func UnpackAsset(asset []byte) (binary []byte, err error) {
 					return binary, err
 				}
 				// copy the binary file content from the archive into 'binary' slice.
-				n, err := io.Copy(bw, rc)
+				//n, err := io.Copy(bw, rc)
+				_, err = io.Copy(bw, rc)
 				if err != nil {
 					return binary, err
 				}
