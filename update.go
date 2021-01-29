@@ -251,6 +251,7 @@ func Update(binary []byte) (err error) {
 	//hash := sha1.New()
 	hash.Write(binary)
 	signature := hash.Sum(nil)
+	checksum := hash.Sum(nil)
 	/*
 	checksum := hash.Sum(nil)
 	log.Printf("Checksum is: %x\n", checksum)
@@ -274,7 +275,7 @@ func Update(binary []byte) (err error) {
 	log.Printf("Signature is: %x", signature)
 	// TODO: prepare update options
 	opts := update.Options{
-		Checksum:  signature,
+		Checksum:  checksum,
 		Signature: signature,
 		Hash:      crypto.SHA256,             // this is the default, you don't need to specify it
 		//Hash:      crypto.SHA1, 
