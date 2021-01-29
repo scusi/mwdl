@@ -51,6 +51,7 @@ var file string
 var outDir string
 var performUpdate bool
 var showVersion bool
+var debug bool
 
 func init() {
 	flag.StringVar(&useragent, "ua", "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E)", "user-agent to send with request")
@@ -61,6 +62,7 @@ func init() {
 	flag.StringVar(&outDir, "o", "./", "directory to write files to")
 	flag.BoolVar(&performUpdate, "update", false, "update itself when true")
 	flag.BoolVar(&showVersion, "version", false, "show version and update")
+	flag.BoolVar(&debug, "debug", false, "spill debug info, if set")
 }
 
 // getProxy - checks if a proxy is set via ENV HTTP_PROXY, http_proxy and returns that.
@@ -180,6 +182,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		if debug {
+			log.Printf("Latest release: %s tag: %s", releaseID, release_tag)
+		}
 		if release_tag == "v"+version {
 			fmt.Printf("Your version (%s) is already the latest version available.\n", version)
 			os.Exit(0)
@@ -187,6 +192,9 @@ func main() {
 		u, err := GetMatchingAssetDownloadURL(releaseID)
 		if err != nil {
 			log.Fatal(err)
+		}
+		if debug {
+			log.Printf("download url: %s", u)
 		}
 		asset, err := DownloadAsset(u)
 		if err != nil {

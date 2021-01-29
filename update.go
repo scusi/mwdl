@@ -10,6 +10,7 @@ import (
 	"compress/gzip"
 	"crypto"
 	"crypto/sha256"
+	//"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -142,6 +143,9 @@ func UnpackAsset(asset []byte) (binary []byte, err error) {
 	//log.Printf("magic is: '%s'\n", hex.Dump(asset[0:4]))
 
 	if bytes.Equal(magicSig, []byte{0x1F, 0x8B}) {
+		if debug {
+			log.Printf("detected gzip file")
+		}
 		// it is a gzipped file
 		// binary is mwdl
 		assetReader := bytes.NewReader(asset)
@@ -163,22 +167,29 @@ func UnpackAsset(asset []byte) (binary []byte, err error) {
 			if name == binary_name && header.Typeflag == tar.TypeReg {
 				var b bytes.Buffer
 				bw := bufio.NewWriter(&b)
-				//n, err := io.Copy(bw, tarReader)
-				_, err := io.Copy(bw, tarReader)
+				n, err := io.Copy(bw, tarReader)
 				if err != nil {
 					return binary, err
 				}
 				bw.Flush()
 				binary = b.Bytes()
-				//log.Printf("copied %d bytes from %s\n", n, name)
+				if debug {
+					log.Printf("copied %d bytes from %s\n", n, name)
+				}
 				break
 			} else {
+				if debug {
+					log.Printf("ignored '%s', continue...", name)
+				}
 				continue
 
 			}
 		}
 		return binary, err
 	} else if bytes.Equal(magicSig, []byte{0x50, 0x4B}) {
+		if debug {
+			log.Printf("detected zip file")
+		}
 		// it is a ZIP file
 		// write asset into a temporary file
 		zipTempFile, err := ioutil.TempFile(os.TempDir(), github_project+"-update-")
@@ -237,10 +248,12 @@ func UnpackAsset(asset []byte) (binary []byte, err error) {
 func Update(binary []byte) (err error) {
 	// caculate checksum
 	hash := sha256.New()
+	//hash := sha1.New()
 	hash.Write(binary)
 	checksum := hash.Sum(nil)
 	log.Printf("Checksum is: %x\n", checksum)
 	// go get the signature for checksum from signature server
+	/*
 	resp, err := http.Get("http://127.0.0.1:9999/signature/" + fmt.Sprintf("%x", checksum))
 	if err != nil {
 		return
@@ -250,12 +263,19 @@ func Update(binary []byte) (err error) {
 	if err != nil {
 		return
 	}
+	*/
+	signatureA := "cf7cf5f67dcf832502956468ce9644bebc8f4f6684b6a497ba113f981a2a404a"
+	signature, err := hex.DecodeString(signatureA)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Printf("Signature is: %x", signature)
 	// TODO: prepare update options
 	opts := update.Options{
 		Checksum:  checksum,
 		Signature: signature,
 		Hash:      crypto.SHA256,             // this is the default, you don't need to specify it
+		//Hash:      crypto.SHA1, 
 		Verifier:  update.NewECDSAVerifier(), // this is the default, you don't need to specify it
 	}
 	err = opts.SetPublicKeyPEM(publicKey)
