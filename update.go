@@ -250,10 +250,11 @@ func Update(binary []byte) (err error) {
 	hash := sha256.New()
 	//hash := sha1.New()
 	hash.Write(binary)
+	signature := hash.Sum(nil)
+	/*
 	checksum := hash.Sum(nil)
 	log.Printf("Checksum is: %x\n", checksum)
 	// go get the signature for checksum from signature server
-	/*
 	resp, err := http.Get("http://127.0.0.1:9999/signature/" + fmt.Sprintf("%x", checksum))
 	if err != nil {
 		return
@@ -263,16 +264,17 @@ func Update(binary []byte) (err error) {
 	if err != nil {
 		return
 	}
-	*/
-	signatureA := "cf7cf5f67dcf832502956468ce9644bebc8f4f6684b6a497ba113f981a2a404a"
+	//signatureA := "cf7cf5f67dcf832502956468ce9644bebc8f4f6684b6a497ba113f981a2a404a" // v0.1.8
+	signatureA := "50a7d698dbb8e6b82153721a8e75da6f28f902aa202ba586e645de3917ce2f6e" // v0.1.9
 	signature, err := hex.DecodeString(signatureA)
 	if err != nil {
 		log.Fatal(err)
 	}
+	*/
 	log.Printf("Signature is: %x", signature)
 	// TODO: prepare update options
 	opts := update.Options{
-		Checksum:  checksum,
+		Checksum:  signature,
 		Signature: signature,
 		Hash:      crypto.SHA256,             // this is the default, you don't need to specify it
 		//Hash:      crypto.SHA1, 
